@@ -13,7 +13,7 @@ function capitalizeName(name) {
   return `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
 }
 
-function HomeScreen() {
+function HomeScreen({ navigation }) {
   const [pokemon, setPokemon] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -97,6 +97,7 @@ function HomeScreen() {
         name={capitalizeName(item.name)}
         number={item.id}
         onFavoritePress={() => toggleFavorite(item.id)}
+        onPress={() => navigation.navigate('Details', { pokemonName: item.name })}
       />
     );
   }
