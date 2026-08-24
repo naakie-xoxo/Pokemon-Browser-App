@@ -1,5 +1,6 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import PokemonCard from '../components/PokemonCard';
 
@@ -89,6 +90,10 @@ function HomeScreen({ navigation }) {
     );
   }
 
+  function openDrawer() {
+    navigation.getParent('RootDrawer')?.openDrawer();
+  }
+
   function renderPokemon({ item }) {
     return (
       <PokemonCard
@@ -105,7 +110,18 @@ function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Pokédex</Text>
+        <View style={styles.titleRow}>
+          <Pressable
+            accessibilityLabel="Open navigation menu"
+            accessibilityRole="button"
+            hitSlop={10}
+            onPress={openDrawer}
+            style={({ pressed }) => [styles.menuButton, pressed && styles.menuButtonPressed]}
+          >
+            <Ionicons color="#111827" name="menu" size={30} />
+          </Pressable>
+          <Text style={styles.title}>Pokédex</Text>
+        </View>
         <Text style={styles.subtitle}>Discover Pokémon and save your favourites.</Text>
       </View>
 
@@ -140,6 +156,22 @@ const styles = StyleSheet.create({
     paddingTop: 56,
     paddingHorizontal: 20,
     paddingBottom: 18,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    borderRadius: 22,
+    backgroundColor: '#F2F4F7',
+  },
+  menuButtonPressed: {
+    opacity: 0.6,
   },
   title: {
     color: '#111827',
