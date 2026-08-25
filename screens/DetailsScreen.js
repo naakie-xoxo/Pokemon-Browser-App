@@ -2,28 +2,29 @@ import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-const TYPE_COLORS = {
-  bug: '#8CB230',
-  dark: '#58575F',
-  dragon: '#0F6AC0',
-  electric: '#EED535',
-  fairy: '#ED6EC7',
-  fighting: '#D04164',
-  fire: '#FD7D24',
-  flying: '#748FC9',
-  ghost: '#556AAE',
-  grass: '#62B957',
-  ground: '#DD7748',
-  ice: '#61CEC0',
-  normal: '#9DA0AA',
-  poison: '#A552CC',
-  psychic: '#EA5D60',
-  rock: '#BAAB82',
-  steel: '#417D9A',
-  water: '#4A90DA',
+const TYPE_STYLES = {
+  normal: { color: '#9DA0AA', icon: 'ellipse-outline' },
+  fire: { color: '#FF9C54', icon: 'flame' },
+  water: { color: '#4D90D5', icon: 'water' },
+  electric: { color: '#F4D23C', icon: 'flash' },
+  grass: { color: '#63BC5A', icon: 'leaf' },
+  ice: { color: '#73CEC0', icon: 'snow' },
+  fighting: { color: '#CE416B', icon: 'fitness' },
+  poison: { color: '#AA6BC8', icon: 'flask' },
+  ground: { color: '#D97845', icon: 'layers' },
+  flying: { color: '#89AAE3', icon: 'airplane' },
+  psychic: { color: '#FA7179', icon: 'eye' },
+  bug: { color: '#91C12F', icon: 'bug' },
+  rock: { color: '#C5B78C', icon: 'diamond' },
+  ghost: { color: '#5269AD', icon: 'skull' },
+  dragon: { color: '#0B6DC3', icon: 'flame' },
+  dark: { color: '#5A5465', icon: 'moon' },
+  steel: { color: '#5A8EA2', icon: 'hardware-chip' },
+  fairy: { color: '#EC8FE6', icon: 'sparkles' },
 };
 
-const FALLBACK_TYPE_COLOR = '#6B7280';
+const FALLBACK_TYPE_STYLE = { color: '#7A7A7A', icon: 'help-circle-outline' };
+const POKEDEX_RED = '#E3350D';
 
 function capitalizeName(name) {
   if (!name) {
@@ -35,10 +36,10 @@ function capitalizeName(name) {
 
 function formatPokemonNumber(id) {
   if (!Number.isFinite(Number(id))) {
-    return '#---';
+    return 'Nº---';
   }
 
-  return `#${String(id).padStart(3, '0')}`;
+  return `Nº${String(id).padStart(3, '0')}`;
 }
 
 function formatMeasurement(value, divisor, unit) {
@@ -106,7 +107,7 @@ function DetailsScreen({ route }) {
   if (loading) {
     return (
       <View style={styles.centeredState}>
-        <ActivityIndicator color="#2352B8" size="large" />
+        <ActivityIndicator color={POKEDEX_RED} size="large" />
         <Text style={styles.loadingText}>Loading Pokémon details...</Text>
       </View>
     );
@@ -115,18 +116,19 @@ function DetailsScreen({ route }) {
   if (error || !pokemon) {
     return (
       <View style={styles.centeredState}>
+        <Ionicons color={POKEDEX_RED} name="alert-circle-outline" size={38} />
         <Text style={styles.errorText}>{error || 'Pokémon details are unavailable.'}</Text>
       </View>
     );
   }
 
-  const types =
-    pokemon.types?.map((typeEntry) => typeEntry.type?.name).filter(Boolean) || [];
-  const primaryType = types[0];
-  const heroColor = TYPE_COLORS[primaryType] || FALLBACK_TYPE_COLOR;
+  const types = pokemon.types?.map((entry) => entry.type?.name).filter(Boolean) || [];
+  const primaryType = types?.[0] || 'normal';
+  const primaryTypeStyle = TYPE_STYLES[primaryType] || FALLBACK_TYPE_STYLE;
   const image =
-    pokemon.sprites?.other?.['official-artwork']?.front_default ||
+    pokemon.sprites?.versions?.['generation-v']?.['black-white']?.animated?.front_default ||
     pokemon.sprites?.front_default ||
+    pokemon.sprites?.other?.['official-artwork']?.front_default ||
     null;
 
   return (
@@ -135,17 +137,22 @@ function DetailsScreen({ route }) {
       showsVerticalScrollIndicator={false}
       style={styles.container}
     >
-      <View style={[styles.hero, { backgroundColor: heroColor }]}>
-        <View style={styles.heroCircle} />
+      <View style={[styles.hero, { backgroundColor: primaryTypeStyle.color }]}>
+        <Ionicons
+          color="rgba(255, 255, 255, 0.25)"
+          name={primaryTypeStyle.icon}
+          size={244}
+          style={styles.heroTypeSymbol}
+        />
         {image ? (
           <Image
-            accessibilityLabel={`${capitalizeName(pokemon.name)} artwork`}
+            accessibilityLabel={`${capitalizeName(pokemon.name)} sprite`}
             resizeMode="contain"
             source={{ uri: image }}
             style={styles.artwork}
           />
         ) : (
-          <View accessibilityLabel="Pokémon artwork unavailable" style={styles.imageFallback}>
+          <View accessibilityLabel="Pokémon image unavailable" style={styles.imageFallback}>
             <Ionicons color="#FFFFFF" name="image-outline" size={54} />
             <Text style={styles.imageFallbackText}>Image unavailable</Text>
           </View>
@@ -158,16 +165,20 @@ function DetailsScreen({ route }) {
 
         <View style={styles.typeRow}>
           {types.length > 0 ? (
-            types.map((type) => (
-              <View
-                key={type}
-                style={[styles.typePill, { backgroundColor: TYPE_COLORS[type] || FALLBACK_TYPE_COLOR }]}
-              >
-                <Text style={styles.typeText}>{capitalizeName(type)}</Text>
-              </View>
-            ))
+            types.map((type) => {
+              const typeStyle = TYPE_STYLES[type] || FALLBACK_TYPE_STYLE;
+
+              return (
+                <View key={type} style={[styles.typePill, { backgroundColor: typeStyle.color }]}>
+                  <View style={styles.typeIconCircle}>
+                    <Ionicons color={typeStyle.color} name={typeStyle.icon} size={14} />
+                  </View>
+                  <Text style={styles.typeText}>{capitalizeName(type)}</Text>
+                </View>
+              );
+            })
           ) : (
-            <View style={[styles.typePill, { backgroundColor: FALLBACK_TYPE_COLOR }]}>
+            <View style={[styles.typePill, { backgroundColor: FALLBACK_TYPE_STYLE.color }]}>
               <Text style={styles.typeText}>Unknown type</Text>
             </View>
           )}
@@ -177,6 +188,9 @@ function DetailsScreen({ route }) {
 
         <View style={styles.measurementsRow}>
           <View style={styles.measurementCard}>
+            <View style={[styles.measurementIcon, { backgroundColor: primaryTypeStyle.color }]}>
+              <Ionicons color="#FFFFFF" name="resize-outline" size={22} />
+            </View>
             <Text style={styles.measurementLabel}>HEIGHT</Text>
             <Text style={styles.measurementValue}>
               {formatMeasurement(pokemon.height, 10, 'm')}
@@ -184,18 +198,14 @@ function DetailsScreen({ route }) {
           </View>
 
           <View style={styles.measurementCard}>
+            <View style={[styles.measurementIcon, { backgroundColor: primaryTypeStyle.color }]}>
+              <Ionicons color="#FFFFFF" name="scale-outline" size={22} />
+            </View>
             <Text style={styles.measurementLabel}>WEIGHT</Text>
             <Text style={styles.measurementValue}>
               {formatMeasurement(pokemon.weight, 10, 'kg')}
             </Text>
           </View>
-        </View>
-
-        <View style={styles.typeCard}>
-          <Text style={styles.measurementLabel}>TYPE</Text>
-          <Text style={styles.typeSummary}>
-            {types.length > 0 ? types.map(capitalizeName).join(', ') : 'Unavailable'}
-          </Text>
         </View>
       </View>
     </ScrollView>
@@ -209,24 +219,22 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 32,
+    paddingBottom: 28,
   },
   hero: {
-    minHeight: 360,
+    minHeight: 330,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  heroCircle: {
+  heroTypeSymbol: {
     position: 'absolute',
-    width: 270,
-    height: 270,
-    borderRadius: 135,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    top: 38,
   },
   artwork: {
-    width: 280,
-    height: 280,
+    width: 238,
+    height: 238,
+    marginTop: 20,
   },
   imageFallback: {
     alignItems: 'center',
@@ -235,52 +243,65 @@ const styles = StyleSheet.create({
   imageFallbackText: {
     marginTop: 8,
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
   },
   detailsPanel: {
     flex: 1,
-    marginTop: -30,
-    paddingTop: 36,
+    marginTop: -36,
+    paddingTop: 34,
     paddingHorizontal: 22,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    paddingBottom: 30,
+    borderTopLeftRadius: 34,
+    borderTopRightRadius: 34,
     backgroundColor: '#FFFFFF',
   },
   name: {
-    color: '#111827',
-    fontSize: 36,
-    fontWeight: '700',
-    letterSpacing: -0.6,
+    color: '#111111',
+    fontSize: 34,
+    fontWeight: '800',
+    letterSpacing: -0.7,
   },
   number: {
     marginTop: 2,
-    color: '#667085',
-    fontSize: 17,
-    fontWeight: '600',
+    color: '#666666',
+    fontSize: 14,
+    fontWeight: '700',
   },
   typeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 18,
+    gap: 8,
+    marginTop: 16,
   },
   typePill: {
-    paddingHorizontal: 18,
-    paddingVertical: 9,
-    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 5,
+    paddingRight: 12,
+    paddingVertical: 5,
+    borderRadius: 18,
+  },
+  typeIconCircle: {
+    width: 23,
+    height: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
   },
   typeText: {
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
   },
   sectionTitle: {
-    marginTop: 30,
-    marginBottom: 14,
-    color: '#344054',
-    fontSize: 18,
-    fontWeight: '700',
+    marginTop: 28,
+    marginBottom: 13,
+    color: '#242424',
+    fontSize: 17,
+    fontWeight: '800',
   },
   measurementsRow: {
     flexDirection: 'row',
@@ -288,44 +309,34 @@ const styles = StyleSheet.create({
   },
   measurementCard: {
     flex: 1,
-    minHeight: 112,
+    minHeight: 132,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: 14,
     borderWidth: 1,
-    borderColor: '#E4E7EC',
-    borderRadius: 18,
+    borderColor: '#E7E7E7',
+    borderRadius: 20,
     backgroundColor: '#FFFFFF',
+  },
+  measurementIcon: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    borderRadius: 20,
   },
   measurementLabel: {
-    color: '#667085',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
+    color: '#767676',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.9,
   },
   measurementValue: {
-    marginTop: 9,
-    color: '#111827',
-    fontSize: 25,
-    fontWeight: '700',
-  },
-  typeCard: {
-    minHeight: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E4E7EC',
-    borderRadius: 18,
-    backgroundColor: '#FFFFFF',
-  },
-  typeSummary: {
-    marginTop: 9,
-    color: '#111827',
-    fontSize: 21,
-    fontWeight: '700',
-    textAlign: 'center',
+    marginTop: 5,
+    color: '#111111',
+    fontSize: 22,
+    fontWeight: '800',
   },
   centeredState: {
     flex: 1,
@@ -336,13 +347,14 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 14,
-    color: '#475467',
-    fontSize: 16,
+    color: '#535353',
+    fontSize: 15,
   },
   errorText: {
+    marginTop: 10,
     color: '#B42318',
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 23,
     textAlign: 'center',
   },
 });
